@@ -1,48 +1,109 @@
-const POKEAPI_URL = "https://pokeapi.co/api/v2";
-const pokemonList = document.getElementById("pokemons");
+const POKEAPI_URL = "https://pokeapi.co/api/v2/pokemon?limit=151";
 
-const loadPokemons = async () => {
+const selectPokemon = document.getElementById("pokemons");
+
+async function cargarPokemones() {
+
     try {
-        const response = await fetch(`${POKEAPI_URL}/pokemon`).then(response => response.json());
-        response.results.forEach(pokemon => {
-            const option = document.createElement("option");
-            option.textContent = pokemon.name;
-            option.value = pokemon.url;
-            pokemonList.appendChild(option);
+
+        const response = await fetch(POKEAPI_URL);
+        const data = await response.json();
+
+        data.results.forEach(pokemon => {
+
+        const option = document.createElement("option");
+
+        option.value = pokemon.url;
+        option.textContent =
+        pokemon.name.charAt(0).toUpperCase() +
+        pokemon.name.slice(1);
+
+        selectPokemon.appendChild(option);
+
         });
+
     } catch (error) {
-        console.error("Error fetching pokemons:", error);
+
+        console.error("Error al cargar Pokémon:", error);
+
     }
+
 }
 
-loadPokemons();
+async function mostrarPokemon(url) {
 
-const pokemonSelected = async (pokemonUrl) => {
+    if (!url) return;
+
     try {
 
-        const response = await fetch(pokemonUrl).then(response => response.json());
+        const response = await fetch(url);
+        const pokemon = await response.json();
 
-        const pokemonImage = document.getElementById("pokemon-image");
-        const pokemonName = document.getElementById("pokemon-name");
-        const pokemonStats = document.getElementById("pokemon-stats");
+        // NOMBRE
+        document.getElementById("pokemon-name").textContent =
+        pokemon.name.charAt(0).toUpperCase() +
+        pokemon.name.slice(1);
 
-        pokemonImage.src = response.sprites.front_default;
-        pokemonName.textContent = response.name;
+        // IMAGEN
+        document.getElementById("pokemon-image").src =
+        pokemon.sprites.other["official-artwork"].front_default ||
+        pokemon.sprites.front_default;
 
-        pokemonStats.innerHTML = "";
+        // ID, ALTURA Y PESO
+        document.getElementById("pokemon-id").textContent = pokemon.id;
+        document.getElementById("pokemon-height").textContent = pokemon.height / 10 + " m";
+        document.getElementById("pokemon-weight").textContent = pokemon.weight / 10 + " kg";
 
-        response.stats.forEach(stat => {
-            const li = document.createElement("li");
-            li.textContent = `${stat.stat.name}: ${stat.base_stat}`;
-            pokemonStats.appendChild(li);
+        // CONTENEDORES
+        const stats = document.getElementById("pokemon-stats");
+        const abilities = document.getElementById("pokemon-abilities");
+        const types = document.getElementById("pokemon-types");
 
-        })
+        stats.innerHTML = "";
+        abilities.innerHTML = "";
+        types.innerHTML = "";
+
+        // TIPOS
+        pokemon.types.forEach(type => {
+
+        const li = document.createElement("li");
+        li.textContent =
+        type.type.name.charAt(0).toUpperCase() +
+        type.type.name.slice(1);
+
+        types.appendChild(li);
+        });
+
+        // ESTADÍSTICAS
+        pokemon.stats.forEach(stat => {
+
+        const li = document.createElement("li");
+        li.textContent =
+        `${stat.stat.name}: ${stat.base_stat}`;
+
+        stats.appendChild(li);
+        });
+
+        // HABILIDADES
+        pokemon.abilities.forEach(ability => {
+
+        const li = document.createElement("li");
+        li.textContent = ability.ability.name;
+
+        abilities.appendChild(li);
+        });
+
     } catch (error) {
-        console.error("Error fetching pokemon details:", error);
+
+        console.error("Error al cargar detalles:", error);
+
     }
 }
-// fetch(`${POKEAPI_URL}/pokemon`)
-// .then(response => response.json())
-// .then(data => {
-//     console.log(data);
-// });
+
+// EVENTO SELECT
+selectPokemon.addEventListener("change", (e) => {
+    mostrarPokemon(e.target.value);
+});
+
+// CARGAR LISTA
+cargarPokemones();
